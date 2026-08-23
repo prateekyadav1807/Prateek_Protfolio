@@ -21,16 +21,20 @@ const PORT = process.env.PORT || 5000
 app.use(helmet())
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman)
+    // Allow requests with no origin (Postman, curl, mobile)
     if (!origin) return callback(null, true)
-    // Allow any localhost port (covers 5173, 5174, 5175, etc.)
-    if (origin.startsWith('http://localhost:')) return callback(null, true)
-    // Allow configured origins
+    // Allow any localhost for local dev
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true)
+    }
+    // Allow explicitly configured origins (deployed frontend + admin)
     const allowed = [
-      process.env.CLIENT_URL || 'http://localhost:5173',
-      process.env.ADMIN_URL  || 'http://localhost:5174',
-    ]
+      process.env.CLIENT_URL,
+      process.env.ADMIN_URL,
+    ].filter(Boolean)
     if (allowed.includes(origin)) return callback(null, true)
+    // In development (no CLIENT_URL set), allow everything
+    if (!process.env.CLIENT_URL) return callback(null, true)
     callback(new Error(`CORS: origin ${origin} not allowed`))
   },
   credentials: true,
