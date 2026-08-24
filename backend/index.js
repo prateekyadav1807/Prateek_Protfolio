@@ -21,20 +21,19 @@ const PORT = process.env.PORT || 5000
 app.use(helmet())
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (Postman, curl, mobile)
+    // Allow no-origin requests (Postman, curl, server-side)
     if (!origin) return callback(null, true)
-    // Allow any localhost for local dev
+    // Allow any localhost (local dev)
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true)
     }
-    // Allow explicitly configured origins (deployed frontend + admin)
-    const allowed = [
-      process.env.CLIENT_URL,
-      process.env.ADMIN_URL,
-    ].filter(Boolean)
+    // Allow all Vercel deployments (covers preview URLs like xxx.vercel.app)
+    if (origin.endsWith('.vercel.app')) return callback(null, true)
+    // Allow Render deployments
+    if (origin.endsWith('.onrender.com')) return callback(null, true)
+    // Allow explicitly configured custom domains
+    const allowed = [process.env.CLIENT_URL, process.env.ADMIN_URL].filter(Boolean)
     if (allowed.includes(origin)) return callback(null, true)
-    // In development (no CLIENT_URL set), allow everything
-    if (!process.env.CLIENT_URL) return callback(null, true)
     callback(new Error(`CORS: origin ${origin} not allowed`))
   },
   credentials: true,
