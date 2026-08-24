@@ -17,6 +17,10 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
+// Trust proxy — required on Render/Vercel so rate limiting uses real client IP
+// not the shared proxy IP (which would block all users after 10 requests)
+app.set('trust proxy', 1)
+
 // Security
 app.use(helmet())
 app.use(cors({
@@ -50,8 +54,8 @@ app.use('/api', (req, res, next) => {
 })
 
 // Rate limiting
-app.use('/api/messages', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: { error: 'Too many requests' } }))
-app.use('/api/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: { error: 'Too many login attempts' } }))
+app.use('/api/messages', rateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: { error: 'Too many requests, try again later' } }))
+app.use('/api/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { error: 'Too many login attempts' } }))
 
 // Routes
 app.get('/', (req, res) => res.json({ message: 'Portfolio API running' }))
