@@ -8,22 +8,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-// Warn clearly in logs if Cloudinary is not configured
-if (!process.env.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME === 'your_cloud_name_here') {
-  console.warn('⚠️  Cloudinary not configured — file uploads will fail. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in .env')
-}
-
+// Use a plain object (not async function) to avoid signature mismatch
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => ({
-    folder:           'portfolio',
-    allowed_formats:  ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-    resource_type:    file.mimetype === 'application/pdf' ? 'raw' : 'image',
-    transformation:   file.mimetype.startsWith('image/') ? [{ quality: 'auto', fetch_format: 'auto' }] : [],
-  }),
+  params: {
+    folder:        'portfolio',
+    resource_type: 'auto',   // handles both images and PDFs automatically
+  },
 })
 
-// Custom error handler for multer
 const multerUpload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
@@ -32,12 +25,12 @@ const multerUpload = multer({
     if (allowed.includes(file.mimetype)) {
       cb(null, true)
     } else {
-      cb(new Error(`File type ${file.mimetype} not allowed. Use JPG, PNG, WebP, or PDF.`))
+      cb(new Error(`File type not allowed. Use JPG, PNG, WebP, or PDF.`))
     }
   },
 })
 
-// Wrap multer to return proper JSON errors instead of crashing
+// Wrap with proper JSON error responses
 export const upload = {
   single: (field) => (req, res, next) => {
     multerUpload.single(field)(req, res, (err) => {
