@@ -8,9 +8,7 @@ export const changePassword = (data) => api.put('/api/auth/password', data)
 
 // Portfolio sections
 export const getHero = () => api.get('/api/portfolio/hero')
-export const updateHero = (data) => api.put('/api/portfolio/hero', data, {
-  headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
-})
+export const updateHero = (data) => api.put('/api/portfolio/hero', data)
 
 export const getAbout = () => api.get('/api/portfolio/about')
 export const updateAbout = (data) => api.put('/api/portfolio/about', data)
@@ -24,12 +22,8 @@ export const updateSkill = (id, data) => api.put(`/api/portfolio/skills/${id}`, 
 export const deleteSkill = (id) => api.delete(`/api/portfolio/skills/${id}`)
 
 export const getProjects = () => api.get('/api/portfolio/projects')
-export const createProject = (data) => api.post('/api/portfolio/projects', data, {
-  headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
-})
-export const updateProject = (id, data) => api.put(`/api/portfolio/projects/${id}`, data, {
-  headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
-})
+export const createProject = (data) => api.post('/api/portfolio/projects', data)
+export const updateProject = (id, data) => api.put(`/api/portfolio/projects/${id}`, data)
 export const deleteProject = (id) => api.delete(`/api/portfolio/projects/${id}`)
 
 export const getExperience = () => api.get('/api/portfolio/experience')
@@ -43,12 +37,8 @@ export const updateEducation = (id, data) => api.put(`/api/portfolio/education/$
 export const deleteEducation = (id) => api.delete(`/api/portfolio/education/${id}`)
 
 export const getCertifications = () => api.get('/api/portfolio/certifications')
-export const createCertification = (data) => api.post('/api/portfolio/certifications', data, {
-  headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
-})
-export const updateCertification = (id, data) => api.put(`/api/portfolio/certifications/${id}`, data, {
-  headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
-})
+export const createCertification = (data) => api.post('/api/portfolio/certifications', data)
+export const updateCertification = (id, data) => api.put(`/api/portfolio/certifications/${id}`, data)
 export const deleteCertification = (id) => api.delete(`/api/portfolio/certifications/${id}`)
 
 export const getAchievements = () => api.get('/api/portfolio/achievements')

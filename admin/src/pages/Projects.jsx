@@ -16,10 +16,10 @@ import Spinner       from '../components/Spinner.jsx'
 const CATEGORIES = ['MERN', 'Frontend', 'Backend', 'Full Stack', 'AI/ML', 'Other']
 
 function ProjectForm({ defaultValues, onSubmit, loading }) {
-  const [imageFile, setImageFile] = useState(null)
+  const [imageUrl, setImageUrl] = useState(null)
   const { register, handleSubmit, formState: { errors } } = useForm({ defaultValues })
 
-  const submit = (data) => onSubmit(data, imageFile)
+  const submit = (data) => onSubmit(data, imageUrl)
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
@@ -105,7 +105,7 @@ function ProjectForm({ defaultValues, onSubmit, loading }) {
       <FileUpload
         label="Project Screenshot / Image"
         value={defaultValues?.image}
-        onChange={setImageFile}
+        onUpload={setImageUrl}
         accept="image/*"
       />
 
@@ -141,33 +141,33 @@ export default function ProjectsPage() {
   const openEdit = (p)  => { setEditing(p);  setModal(true) }
   const closeModal = () => { setModal(false); setEditing(null) }
 
-  const onSubmit = async (formData, imageFile) => {
+  const onSubmit = async (formData, imageUrl) => {
     setSaving(true)
     try {
-      const fd = new FormData()
-      const fields = ['title', 'category', 'description', 'longDesc', 'github', 'demo', 'icon', 'order', 'featured']
-      fields.forEach(k => {
-        if (formData[k] !== undefined) fd.append(k, formData[k])
-      })
-      // Parse tech and features
-      const tech = formData.techStr
-        ? formData.techStr.split(',').map(s => s.trim()).filter(Boolean)
-        : []
-      const features = formData.featuresStr
-        ? formData.featuresStr.split('\n').map(s => s.trim()).filter(Boolean)
-        : []
-      fd.append('tech',     JSON.stringify(tech))
-      fd.append('features', JSON.stringify(features))
-      if (imageFile) fd.append('image', imageFile)
+      const payload = {
+        title:       formData.title,
+        category:    formData.category,
+        description: formData.description,
+        longDesc:    formData.longDesc,
+        github:      formData.github,
+        demo:        formData.demo,
+        icon:        formData.icon,
+        order:       formData.order,
+        featured:    formData.featured,
+        tech:     formData.techStr ? formData.techStr.split(',').map(s => s.trim()).filter(Boolean) : [],
+        features: formData.featuresStr ? formData.featuresStr.split('\n').map(s => s.trim()).filter(Boolean) : [],
+      }
+      if (imageUrl) payload.image = imageUrl
 
       if (editing) {
-        await updateProject(editing._id, fd)
+        await updateProject(editing._id, payload)
         toast.success('Project updated!')
       } else {
-        await createProject(fd)
+        await createProject(payload)
         toast.success('Project added!')
       }
       closeModal()
+      notifyPortfolioUpdated()
       load()
     } catch (err) {
       toast.error(err.response?.data?.error || 'Save failed')

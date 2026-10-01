@@ -4,15 +4,15 @@ import toast from 'react-hot-toast'
 import { HiPlus, HiTrash } from 'react-icons/hi'
 import { getHero, updateHero } from '../api/services.js'
 import { notifyPortfolioUpdated } from '../utils/broadcast.js'
-import PageHeader  from '../components/PageHeader.jsx'
-import FileUpload  from '../components/FileUpload.jsx'
-import Spinner     from '../components/Spinner.jsx'
+import PageHeader from '../components/PageHeader.jsx'
+import FileUpload from '../components/FileUpload.jsx'
+import Spinner    from '../components/Spinner.jsx'
 
 export default function HeroPage() {
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [photoFile,  setPhotoFile]  = useState(null)
-  const [resumeFile, setResumeFile] = useState(null)
+  const [loading,    setLoading]    = useState(true)
+  const [saving,     setSaving]     = useState(false)
+  const [photoUrl,   setPhotoUrl]   = useState(null)  // Cloudinary URL after upload
+  const [resumeUrl,  setResumeUrl]  = useState(null)  // Cloudinary URL after upload
   const [heroData,   setHeroData]   = useState(null)
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
@@ -41,7 +41,6 @@ export default function HeroPage() {
           github:    d.github    || '',
           linkedin:  d.linkedin  || '',
           instagram: d.instagram || '',
-          // Strip _id from stats so useFieldArray doesn't get confused
           stats: d.stats?.length
             ? d.stats.map(s => ({ value: s.value || '', label: s.label || '' }))
             : [{ value: '', label: '' }],
@@ -54,24 +53,25 @@ export default function HeroPage() {
   const onSubmit = async (formData) => {
     setSaving(true)
     try {
-      const fd = new FormData()
-      fd.append('name',      formData.name)
-      fd.append('tagline',   formData.tagline)
-      fd.append('github',    formData.github)
-      fd.append('linkedin',  formData.linkedin)
-      fd.append('instagram', formData.instagram)
-      // Roles as JSON array
-      fd.append('roles', JSON.stringify(formData.roles.map(r => r.value).filter(Boolean)))
-      // Stats as JSON array
-      fd.append('stats', JSON.stringify(formData.stats.filter(s => s.value && s.label)))
-      if (photoFile)  fd.append('photo',  photoFile)
-      if (resumeFile) fd.append('resume', resumeFile)
+      // Send JSON — file URLs already uploaded to Cloudinary directly from browser
+      const payload = {
+        name:      formData.name,
+        tagline:   formData.tagline,
+        github:    formData.github,
+        linkedin:  formData.linkedin,
+        instagram: formData.instagram,
+        roles:     formData.roles.map(r => r.value).filter(Boolean),
+        stats:     formData.stats.filter(s => s.value && s.label),
+      }
+      // Only include URLs if a new file was uploaded
+      if (photoUrl)  payload.photo     = photoUrl
+      if (resumeUrl) payload.resumeUrl = resumeUrl
 
-      await updateHero(fd)
+      await updateHero(payload)
       toast.success('Hero section updated!')
       notifyPortfolioUpdated()
-      setPhotoFile(null)
-      setResumeFile(null)
+      setPhotoUrl(null)
+      setResumeUrl(null)
     } catch (err) {
       toast.error(err.response?.data?.error || 'Update failed')
     } finally {
@@ -90,7 +90,6 @@ export default function HeroPage() {
         {/* Basic info */}
         <div className="card space-y-4">
           <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--text)' }}>Basic Info</h3>
-
           <div>
             <label className="label">Full Name *</label>
             <input className={`input ${errors.name ? 'border-red-500' : ''}`}
@@ -98,7 +97,6 @@ export default function HeroPage() {
               {...register('name', { required: 'Name is required' })} />
             {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
           </div>
-
           <div>
             <label className="label">Tagline / Bio *</label>
             <textarea className="input resize-none" rows={3}
@@ -107,7 +105,7 @@ export default function HeroPage() {
           </div>
         </div>
 
-        {/* Roles (typewriter) */}
+        {/* Roles */}
         <div className="card space-y-3">
           <div className="flex items-center justify-between mb-1">
             <h3 className="font-semibold text-sm" style={{ color: 'var(--text)' }}>
@@ -172,22 +170,22 @@ export default function HeroPage() {
           ))}
         </div>
 
-        {/* Photo upload */}
+        {/* Profile Photo */}
         <div className="card">
           <h3 className="font-semibold text-sm mb-4" style={{ color: 'var(--text)' }}>Profile Photo</h3>
           <FileUpload
             label="Profile Picture (JPG / PNG / WebP)"
             value={heroData?.photo}
-            onChange={setPhotoFile}
+            onUpload={setPhotoUrl}
             accept="image/*"
             previewType="avatar"
           />
         </div>
 
-        {/* Resume upload */}
+        {/* Resume PDF */}
         <div className="card">
           <h3 className="font-semibold text-sm mb-4" style={{ color: 'var(--text)' }}>Resume PDF</h3>
-          {heroData?.resumeUrl && (
+          {heroData?.resumeUrl && !resumeUrl && (
             <p className="text-xs mb-3" style={{ color: 'var(--text-m)' }}>
               Current:{' '}
               <a href={heroData.resumeUrl} target="_blank" rel="noopener noreferrer"
@@ -198,7 +196,7 @@ export default function HeroPage() {
           )}
           <FileUpload
             label="Upload New Resume (PDF)"
-            onChange={setResumeFile}
+            onUpload={setResumeUrl}
             accept="application/pdf,image/*"
             previewType="pdf"
           />

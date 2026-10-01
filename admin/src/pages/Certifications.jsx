@@ -13,10 +13,10 @@ import FileUpload    from '../components/FileUpload.jsx'
 import Spinner       from '../components/Spinner.jsx'
 
 function CertForm({ defaultValues, onSubmit, loading }) {
-  const [imageFile, setImageFile] = useState(null)
+  const [imageUrl, setImageUrl] = useState(null)
   const { register, handleSubmit, formState: { errors } } = useForm({ defaultValues })
 
-  const submit = (data) => onSubmit(data, imageFile)
+  const submit = (data) => onSubmit(data, imageUrl)
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
@@ -52,7 +52,7 @@ function CertForm({ defaultValues, onSubmit, loading }) {
       <FileUpload
         label="Badge / Certificate Image"
         value={defaultValues?.image}
-        onChange={setImageFile}
+        onUpload={setImageUrl}
         accept="image/*"
       />
 
@@ -88,18 +88,17 @@ export default function CertificationsPage() {
   const openEdit   = (c)  => { setEditing(c);  setModal(true) }
   const closeModal = () => { setModal(false);  setEditing(null) }
 
-  const onSubmit = async (formData, imageFile) => {
+  const onSubmit = async (formData, imageUrl) => {
     setSaving(true)
     try {
-      const fd = new FormData()
-      Object.entries(formData).forEach(([k, v]) => { if (v !== undefined) fd.append(k, v) })
-      if (imageFile) fd.append('image', imageFile)
+      const payload = { ...formData }
+      if (imageUrl) payload.image = imageUrl
 
       if (editing) {
-        await updateCertification(editing._id, fd)
+        await updateCertification(editing._id, payload)
         toast.success('Certification updated!')
       } else {
-        await createCertification(fd)
+        await createCertification(payload)
         toast.success('Certification added!')
       }
       closeModal()
